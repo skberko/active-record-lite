@@ -115,11 +115,23 @@ class SQLObject
   end
 
   def attribute_values
-    # ...
+    #the interpolated column name is actually a getter function here;
+    #so we're basically calling instance variables on self (sorta)
+    self.class.columns.map { |column| self.send("#{column}") }
   end
 
   def insert
-    
+    col_names = self.class.columns.join(", ")
+    question_marks = []
+    self.class.columns.count.times { question_marks << "?"}
+
+
+    DBConnection.execute(<<-SQL, *attribute_values)
+      INSERT INTO
+        #{self.class.table_name} (#{col_names})
+      VALUES
+        #{question_marks.join(", ")}
+    SQL
   end
 
   def update
